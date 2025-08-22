@@ -1,0 +1,122 @@
+#!/usr/bin/python
+
+from argparse import ArgumentDefaultsHelpFormatter, ArgumentParser, FileType
+
+from fontforge import font as ff_font
+from fontforge import open as ff_open
+from psMat import scale
+
+
+def read_glyphs(cgrom_handle):
+    glyphs = []
+    for _ in range(512):
+        row = []
+        for _ in range(8):
+            row.append(int.from_bytes(cgrom_handle.read(1)))
+        glyphs.append(row)
+    return glyphs
+
+
+def read_mapping(monitor_handle):
+    mapping = []
+    monitor_handle.seek(0x0a92)
+    for _ in range(256):
+        mapping.append(int.from_bytes(monitor_handle.read(1)))
+    return mapping
+
+
+def draw_pixel(pen, x, y):
+    w = 8
+    pen.moveTo((w * x, w * (6 - y)))
+    pen.lineTo((w * (x + 1), w * (6 - y)))
+    pen.lineTo((w * (x + 1), w * (5 - y)))
+    pen.lineTo((w * x, w * (5 - y)))
+    pen.closePath()
+
+
+def make_character(font, code, glyph):
+    char = font.createChar(code)
+    char.width = 8
+    pen = char.glyphPen()
+    for y in range(8):
+        row = glyph[y]
+        for x in range(8):
+            if row & (1 << x):
+                draw_pixel(pen, x, y)
+    char.transform(scale(0.6, 1.0))
+
+
+def make_font(cgrom_handle, monitor_handle, ttf_file):
+    font = ff_open("/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf")
+    font.fontname = 'SharpMZ'
+    font.familyname = 'SharpMZ'
+    font.fullname = 'SharpMZ'
+    font.em = 64
+
+    font.ascent = 34
+
+    glyphs = read_glyphs(cgrom_handle)
+    mapping = read_mapping(monitor_handle)
+
+    # The following changes the default font.
+    #for code in range(0x20, 0x5e):
+    #    make_character(font, code, glyphs[mapping[code]])
+    #for code in range(0x61, 0x7b):
+    #    make_character(font, code, glyphs[0x20 + code])
+    #make_character(font, 0x5e, glyphs[0xbe])
+    #make_character(font, 0x5f, glyphs[0x3c])
+    #make_character(font, 0x60, glyphs[0xa4])
+    #make_character(font, 0x7b, glyphs[0xbc])
+    #make_character(font, 0x7c, glyphs[0x35])
+    #make_character(font, 0x7d, glyphs[0x40])
+    #make_character(font, 0x7e, glyphs[0xa5])
+
+    # Normal charset.
+    offset = 0xe000
+    for code in range(0x100):
+        make_character(font, offset + code, glyphs[mapping[code]])
+
+    # Alternate charset.
+    offset = 0xe100
+    for code in range(0x100):
+        make_character(font, offset + code, glyphs[0x100 + mapping[code]])
+
+    # Normal charset without control characters.
+    offset = 0xe200
+    for code in range(0x100):
+        make_character(font, offset + code, glyphs[code])
+
+    # Alternate charset without control characters.
+    offset = 0xe300
+    for code in range(0x100):
+        make_character(font, offset + code, glyphs[0x100 + code])
+
+    font.generate(ttf_file)
+
+
+def _arg_parser():
+    parser = ArgumentParser(formatter_class=ArgumentDefaultsHelpFormatter)
+    parser.add_argument(
+        'cgrom_handle', metavar='CG', type=FileType('rb'),
+        help='character rom file')
+    parser.add_argument(
+        'monitor_handle', metavar='MONITOR', type=FileType('rb'),
+        help='monitor rom file')
+    parser.add_argument(
+        'ttf_handle', metavar='TTF', type=str, help='output file')
+    return parser
+
+
+def main():
+    parser = _arg_parser()
+
+    try:
+        args = parser.parse_args()
+    except IOError as error:
+        parser.error(error)
+
+    make_font(args.cgrom_handle, args.monitor_handle, args.ttf_handle)
+
+
+if __name__ == '__main__':
+    main()

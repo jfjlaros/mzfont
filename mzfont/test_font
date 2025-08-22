@@ -1,0 +1,20 @@
+#!/usr/bin/python
+
+from sys import stdout
+
+
+def print_charset(offset):
+    for i in range(16):
+        for j in range(16):
+            stdout.write(f'{chr(0xE000 + offset + 16 * i + j)}')
+        stdout.write('\n');
+    stdout.write('\n');
+
+
+def main():
+    for offset in [0x0000, 0x0100, 0x0200, 0x0300]:
+        print_charset(offset)
+
+
+if __name__ == '__main__':
+    main()
