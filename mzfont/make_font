@@ -7,43 +7,34 @@ from fontforge import open as ff_open
 from psMat import scale
 
 
-def read_glyphs(cgrom_handle):
-    glyphs = []
-    for _ in range(512):
-        row = []
-        for _ in range(8):
-            row.append(int.from_bytes(cgrom_handle.read(1)))
-        glyphs.append(row)
-    return glyphs
+def read_glyphs(handle):
+    return [handle.read(8) for _ in range(512)]
 
 
-def read_mapping(monitor_handle):
-    mapping = []
-    monitor_handle.seek(0x0a92)
-    for _ in range(256):
-        mapping.append(int.from_bytes(monitor_handle.read(1)))
-    return mapping
+def read_mapping(handle):
+    handle.seek(0x0a92)
+    return handle.read(256)
 
 
 def draw_pixel(pen, x, y):
-    w = 8
-    pen.moveTo((w * x, w * (6 - y)))
-    pen.lineTo((w * (x + 1), w * (6 - y)))
-    pen.lineTo((w * (x + 1), w * (5 - y)))
-    pen.lineTo((w * x, w * (5 - y)))
+    width = 5
+    height = 8
+    pen.moveTo((width * x, height * (6 - y)))
+    pen.lineTo((width * (x + 1), height * (6 - y)))
+    pen.lineTo((width * (x + 1), height * (5 - y)))
+    pen.lineTo((width * x, height * (5 - y)))
     pen.closePath()
 
 
 def make_character(font, code, glyph):
     char = font.createChar(code)
-    char.width = 8
+    char.width = 5
+
     pen = char.glyphPen()
     for y in range(8):
-        row = glyph[y]
         for x in range(8):
-            if row & (1 << x):
+            if glyph[y] & (1 << x):
                 draw_pixel(pen, x, y)
-    char.transform(scale(0.6, 1.0))
 
 
 def make_font(cgrom_handle, monitor_handle, ttf_file):
@@ -52,24 +43,10 @@ def make_font(cgrom_handle, monitor_handle, ttf_file):
     font.familyname = 'SharpMZ'
     font.fullname = 'SharpMZ'
     font.em = 64
-
     font.ascent = 34
 
     glyphs = read_glyphs(cgrom_handle)
     mapping = read_mapping(monitor_handle)
-
-    # The following changes the default font.
-    #for code in range(0x20, 0x5e):
-    #    make_character(font, code, glyphs[mapping[code]])
-    #for code in range(0x61, 0x7b):
-    #    make_character(font, code, glyphs[0x20 + code])
-    #make_character(font, 0x5e, glyphs[0xbe])
-    #make_character(font, 0x5f, glyphs[0x3c])
-    #make_character(font, 0x60, glyphs[0xa4])
-    #make_character(font, 0x7b, glyphs[0xbc])
-    #make_character(font, 0x7c, glyphs[0x35])
-    #make_character(font, 0x7d, glyphs[0x40])
-    #make_character(font, 0x7e, glyphs[0xa5])
 
     # Normal charset.
     offset = 0xe000
