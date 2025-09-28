@@ -31,29 +31,27 @@ class MzFont:
         self._glyphs = _read_glyphs(glyphs_handle)
         self._perm = _read_perm(perm_handle)
         self._identity = range(256)
-        self._dim = (5, 8)
 
         with suppress_output():
             self._font = ff_open(base_font)
+        self._glyph_width = self._font['space'].width
+        self._glyph_height = self._font.em + self._font.os2_typolinegap
+        self._glyph_offset = -self._font.descent
         self._font.fontname = font_name
         self._font.familyname = font_name
         self._font.fullname = font_name
-        self._font.em = 64
-        self._font.ascent = 48
-        self._font.descent = 0
-
 
     def _draw_pixel(self, pen: object, x: int, y: int) -> None:
-        width, height = self._dim
-        pen.moveTo((width * x, height * (6 - y)))
-        pen.lineTo((width * (x + 1), height * (6 - y)))
-        pen.lineTo((width * (x + 1), height * (5 - y)))
-        pen.lineTo((width * x, height * (5 - y)))
+        width, height = self._glyph_width // 8, self._glyph_height // 8
+        pen.moveTo((width * x, height * (8 - y) + self._glyph_offset))
+        pen.lineTo((width * (x + 1), height * (8 - y) + self._glyph_offset))
+        pen.lineTo((width * (x + 1), height * (7 - y) + self._glyph_offset))
+        pen.lineTo((width * x, height * (7 - y) + self._glyph_offset))
         pen.closePath()
 
     def _make_character(self, code: int, glyph: list[bytes]) -> None:
         char = self._font.createChar(code)
-        char.width = self._dim[0]
+        char.width = self._glyph_width
 
         pen = char.glyphPen()
         for y in range(8):
@@ -61,8 +59,7 @@ class MzFont:
                 if glyph[y] & (1 << x):
                     self._draw_pixel(pen, x, y)
 
-    def _make_charset(
-            self, offset: int, charset: int, perm: bytes) -> None:
+    def _make_charset(self, offset: int, charset: int, perm: bytes) -> None:
         glyph_offset = 0x100 * charset
         for code in range(0x100):
             self._make_character(
@@ -104,10 +101,23 @@ class MzFont:
 
         :arg ttf_font: File name of output font file.
         '''
-        self._font.ascent = 64
-        self._dim = (8, 8)
+        self._glyph_width = self._font.em
+        self._glyph_height = self._font.em
+        self._glyph_offset = 0
+
+        self._font.ascent = self._font.em
+        self._font.descent = 0
+
+        self._font.os2_typoascent = self._font.ascent
+        self._font.os2_typodescent = -self._font.descent
         self._font.os2_typolinegap = 0
-        self._font.os2_use_typo_metrics = True
+
+        self._font.os2_winascent = self._font.ascent
+        self._font.os2_windescent = self._font.descent
+
+        self._font.hhea_ascent = self._font.ascent
+        self._font.hhea_descent = -self._font.descent
+        self._font.hhea_linegap = 0
 
         self._make_default_charset()
         self.make_font(ttf_font)
