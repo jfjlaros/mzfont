@@ -66,14 +66,12 @@ class MzFont:
                 offset + code, self._glyphs[glyph_offset + perm[code]])
 
     def _make_charsets(self) -> None:
-        # Normal charset.
+        # Interchange character set.
         self._make_charset(0xe000, 0, self._perm)
-        # Alternative charset.
-        self._make_charset(0xe100, 1, self._perm)
-        # Normal charset without control characters.
-        self._make_charset(0xe200, 0, self._identity)
-        # Alternative charset without control characters.
-        self._make_charset(0xe300, 1, self._identity)
+        # Primary display character set.
+        self._make_charset(0xe100, 0, self._identity)
+        # Alternate display character set.
+        self._make_charset(0xe200, 1, self._identity)
 
     def _make_default_charset(self) -> None:
         for code in range(0x20, 0x5e):

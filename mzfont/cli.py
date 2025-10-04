@@ -1,6 +1,7 @@
 from argparse import RawDescriptionHelpFormatter, ArgumentParser, FileType
 
-from . import __copyright__, __description__, __info__, doc_split
+from . import doc_split
+from .meta import _copyright, _description, _info
 from .make_font import MzFont
 from .test_font import print_charsets
 
@@ -36,10 +37,10 @@ def _arg_parser():
         help='font name')
 
     parser = ArgumentParser(
-        description = __description__, epilog=__copyright__,
+        description = _description, epilog=_copyright,
         formatter_class=RawDescriptionHelpFormatter)
     parser.add_argument(
-        '-v', action='version', version=__info__)
+        '-v', action='version', version=_info)
     subparsers = parser.add_subparsers(dest='subcommand')
     subparsers.required = True
 

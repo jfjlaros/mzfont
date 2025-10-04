@@ -4,19 +4,12 @@ build-backend = 'hatchling.build'
 
 [project]
 name = 'mzfont'
-dynamic = ['authors', 'description', 'keywords', 'version']
-
-[tool.hatch.version]
-path = 'mzfont/__init__.py'
-readme = 'README.rst'
-license = 'MIT'
-license-files = ['LICENSE.md']
-
-#classifiers = [
-#    'Programming Language :: Python :: 3',
-#    'License :: OSI Approved :: MIT License',
-#    'Operating System :: OS Independent',
-#]
+dynamic = [
+  'authors', 'classifiers', 'description', 'keywords', 'license',
+  'license-files', 'readme', 'version']
 
 [project.scripts]
 mzfont = 'mzfont:cli.main'
+
+[tool.hatch.metadata.hooks.custom]
+path = 'mzfont/meta.py'

@@ -1,2 +1,3 @@
+hatchling
 sphinx-argparse
 sphinx-autodoc-typehints
