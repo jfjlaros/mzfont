@@ -9,13 +9,13 @@ mock = ModuleType('psMat')
 mock.scale = object
 modules['psMat'] = mock
 
-from mzfont import __authors__, __copyright__, __project__, __version__
+from mzfont.meta import _author, _copyright, _project, _version
 
 
-author = __authors__[0]['name']
-copyright = __copyright__
-project = __project__
-release = __version__
+author = _author
+copyright = _copyright
+project = _project
+release = _version
 
 autoclass_content = 'both'
 extensions = [
