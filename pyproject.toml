@@ -8,9 +8,9 @@ dynamic = ['authors', 'description', 'keywords', 'version']
 
 [tool.hatch.version]
 path = 'mzfont/__init__.py'
-readme = 'README.md'
+readme = 'README.rst'
 license = 'MIT'
-license-files = ['LICEN[CS]E*']
+license-files = ['LICENSE.md']
 
 #classifiers = [
 #    'Programming Language :: Python :: 3',
